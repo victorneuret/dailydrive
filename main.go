@@ -47,6 +47,7 @@ func main() {
 			log.Fatal(err)
 		}
 		fmt.Println("You are logged in as:", user.ID)
+		updateDailyDrive()
 
 		c := cron.New()
 		// Running every day at 10AM
