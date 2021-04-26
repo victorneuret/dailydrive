@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/robfig/cron"
 	"github.com/zmb3/spotify"
 )
 
@@ -20,8 +21,9 @@ var (
 		spotify.ScopePlaylistReadPrivate,
 		spotify.ScopePlaylistModifyPublic,
 		spotify.ScopePlaylistReadCollaborative)
-	ch    = make(chan *spotify.Client)
-	state = "abc12342"
+	ch     = make(chan *spotify.Client)
+	state  = "abc12342"
+	client *spotify.Client
 )
 
 func main() {
@@ -31,29 +33,28 @@ func main() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		log.Println("Got request for:", r.URL.String())
 	})
-	go http.ListenAndServe(":2021", nil)
 
 	url := auth.AuthURL(state)
 	fmt.Println("Please log in to Spotify by visiting the following page in your browser:", url)
 
-	// wait for auth to complete
-	client := <-ch
+	go func() {
+		// wait for auth to complete
+		client = <-ch
 
-	// use the client to make calls that require authorization
-	user, err := client.CurrentUser()
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println("You are logged in as:", user.ID)
-	dailyDrive := findDailyDrive(client)
-	myDailyDrive := findMyDailyDrive(client)
-	if myDailyDrive == nil {
-		createMyDailyDrivePlaylist(client, user)
-		myDailyDrive = findMyDailyDrive(client)
-	}
-	fmt.Println(myDailyDrive)
-	clearMyDailyDrive(client, myDailyDrive)
-	fillMyDailyDrive(client, dailyDrive, myDailyDrive)
+		// use the client to make calls that require authorization
+		user, err := client.CurrentUser()
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println("You are logged in as:", user.ID)
+
+		c := cron.New()
+		// Running every day at 10AM
+		_ = c.AddFunc("0 10 * * *", updateDailyDrive)
+		c.Start()
+	}()
+
+	http.ListenAndServe(":2021", nil)
 }
 
 func completeAuth(w http.ResponseWriter, r *http.Request) {

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/zmb3/spotify"
 	"log"
 )
@@ -17,7 +16,6 @@ func getPlaylistTracksIDs(client *spotify.Client, playlist *spotify.SimplePlayli
 	for page := 1; ; page++ {
 		for _, track := range tracks.Tracks {
 			if track.Track.Type != "show" && track.Track.Type != "episode" {
-				fmt.Printf("%+v\n", track.Track)
 				IDs = append(IDs, track.Track.ID)
 			}
 		}
