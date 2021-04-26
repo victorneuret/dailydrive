@@ -4,15 +4,11 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/robfig/cron"
 	"github.com/zmb3/spotify"
 )
-
-// redirectURI is the OAuth redirect URI for the application.
-// You must register an application at Spotify's developer portal
-// and enter this value.
-const redirectURI = "http://localhost:2021/callback"
 
 var (
 	auth = spotify.NewAuthenticator(
@@ -21,9 +17,10 @@ var (
 		spotify.ScopePlaylistReadPrivate,
 		spotify.ScopePlaylistModifyPublic,
 		spotify.ScopePlaylistReadCollaborative)
-	ch     = make(chan *spotify.Client)
-	state  = "abc12342"
-	client *spotify.Client
+	ch          = make(chan *spotify.Client)
+	state       = "abc12342"
+	client      *spotify.Client
+	redirectURI = os.Getenv("REDIRECT_URL")
 )
 
 func main() {
