@@ -11,12 +11,12 @@ func updateDailyDrive() {
 		log.Fatal(err)
 	}
 
-	dailyDrive := findDailyDrive(client)
-	myDailyDrive := findMyDailyDrive(client)
+	dailyDrive := findDailyDrive(&client)
+	myDailyDrive := findMyDailyDrive(&client)
 	if myDailyDrive == nil {
-		createMyDailyDrivePlaylist(client, user)
-		myDailyDrive = findMyDailyDrive(client)
+		createMyDailyDrivePlaylist(&client, user)
+		myDailyDrive = findMyDailyDrive(&client)
 	}
-	clearMyDailyDrive(client, myDailyDrive)
-	fillMyDailyDrive(client, dailyDrive, myDailyDrive)
+	clearMyDailyDrive(&client, myDailyDrive)
+	fillMyDailyDrive(&client, dailyDrive, myDailyDrive)
 }

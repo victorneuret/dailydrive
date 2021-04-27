@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"golang.org/x/oauth2"
 	"log"
 	"net/http"
 	"os"
@@ -10,17 +11,24 @@ import (
 	"github.com/zmb3/spotify"
 )
 
-var (
-	auth = spotify.NewAuthenticator(
-		redirectURI,
+var redirectURI = os.Getenv("REDIRECT_URL")
+
+func makeAuth() spotify.Authenticator {
+	auth := spotify.NewAuthenticator(redirectURI,
 		spotify.ScopePlaylistModifyPrivate,
 		spotify.ScopePlaylistReadPrivate,
 		spotify.ScopePlaylistModifyPublic,
 		spotify.ScopePlaylistReadCollaborative)
-	ch          = make(chan *spotify.Client)
-	state       = "abc12342"
-	client      *spotify.Client
-	redirectURI = os.Getenv("REDIRECT_URL")
+	auth.SetAuthInfo(os.Getenv("SPOTIFY_ID"), os.Getenv("SPOTIFY_SECRET"))
+	return auth
+}
+
+var (
+	auth   = makeAuth()
+	state  = "abc12342"
+	ch     = make(chan spotify.Client)
+	client spotify.Client
+	token  *oauth2.Token
 )
 
 func main() {
@@ -35,20 +43,31 @@ func main() {
 	fmt.Println("Please log in to Spotify by visiting the following page in your browser:", url)
 
 	go func() {
-		// wait for auth to complete
 		client = <-ch
-
-		// use the client to make calls that require authorization
 		user, err := client.CurrentUser()
 		if err != nil {
 			log.Fatal(err)
 		}
+
+		// Extract the token.
+		token, err = client.Token()
+		if err != nil {
+			log.Fatal(err)
+		}
+		// Load token again and create client from it.
+		client = clientFromToken(token)
+
+		user, err = client.CurrentUser()
+		if err != nil {
+			log.Fatal(err)
+		}
 		fmt.Println("You are logged in as:", user.ID)
+
 		updateDailyDrive()
 
 		c := cron.New()
 		// Running every day at 10AM
-		_ = c.AddFunc("0 10 * * *", updateDailyDrive)
+		_ = c.AddFunc("0 0 10 * * *", updateDailyDrive)
 		c.Start()
 	}()
 
@@ -68,5 +87,10 @@ func completeAuth(w http.ResponseWriter, r *http.Request) {
 	// use the token to get an authenticated client
 	client := auth.NewClient(tok)
 	_, _ = fmt.Fprintf(w, "Login Completed!")
-	ch <- &client
+	ch <- client
+}
+
+func clientFromToken(token *oauth2.Token) spotify.Client {
+	auth := makeAuth()
+	return auth.NewClient(token)
 }
