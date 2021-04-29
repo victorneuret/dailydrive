@@ -53,7 +53,7 @@ func main() {
 
 		c := cron.New()
 		// Running every day at 10AM
-		_ = c.AddFunc("0 0 10 * * *", updateDailyDrive)
+		_ = c.AddFunc("@daily", updateDailyDrive)
 		c.Start()
 	}()
 
