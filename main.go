@@ -28,7 +28,6 @@ var (
 	state  = "abc12342"
 	ch     = make(chan spotify.Client)
 	client spotify.Client
-	token  *oauth2.Token
 )
 
 func main() {
@@ -45,19 +44,6 @@ func main() {
 	go func() {
 		client = <-ch
 		user, err := client.CurrentUser()
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		// Extract the token.
-		token, err = client.Token()
-		if err != nil {
-			log.Fatal(err)
-		}
-		// Load token again and create client from it.
-		client = clientFromToken(token)
-
-		user, err = client.CurrentUser()
 		if err != nil {
 			log.Fatal(err)
 		}

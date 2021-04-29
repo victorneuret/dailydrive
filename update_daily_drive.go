@@ -6,6 +6,15 @@ import (
 
 func updateDailyDrive() {
 	log.Println("Running Daily Drive Update")
+
+	// Extract the token.
+	token, err := client.Token()
+	if err != nil {
+		log.Fatal(err)
+	}
+	// Load token again and create client from it.
+	client = clientFromToken(token)
+
 	user, err := client.CurrentUser()
 	if err != nil {
 		log.Fatal(err)
